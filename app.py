@@ -8,11 +8,23 @@ from cryptography.fernet import Fernet
 
 # --- Constants ---
 DATA_FILE = "users_data.json"
-KEY = Fernet.generate_key()
-cipher = Fernet(KEY)
-
+KEY_FILE = "secret.key"
 MAX_ATTEMPTS = 3
 LOCKOUT_DURATION = 300  # 5 minutes
+
+# --- Load or Generate Encryption Key ---
+def load_key():
+    if os.path.exists(KEY_FILE):
+        with open(KEY_FILE, "rb") as key_file:
+            return key_file.read()
+    else:
+        key = Fernet.generate_key()
+        with open(KEY_FILE, "wb") as key_file:
+            key_file.write(key)
+        return key
+
+KEY = load_key()
+cipher = Fernet(KEY)
 
 # --- Session Initialization ---
 if "user" not in st.session_state:
@@ -22,7 +34,7 @@ if "failed_attempts" not in st.session_state:
 if "lockout_time" not in st.session_state:
     st.session_state.lockout_time = None
 
-# --- Load and Save ---
+# --- Load and Save Users ---
 if os.path.exists(DATA_FILE):
     with open(DATA_FILE, "r") as f:
         users = json.load(f)
@@ -70,6 +82,7 @@ def decrypt_data(encrypted_text, passkey):
 st.title("🔐 Multi-User Secure Data Vault")
 
 menu = ["Home", "Register", "Login", "Store Data", "Retrieve Data", "Logout"]
+st.sidebar.title("Data Secure App 🔒")
 choice = st.sidebar.selectbox("Navigation", menu)
 
 if choice == "Home":
@@ -113,7 +126,7 @@ elif choice == "Logout":
     st.session_state.user = None
     st.success("👋 Logged out successfully.")
 
-# --- Store Data (only if logged in) ---
+# --- Store Data ---
 elif choice == "Store Data":
     if not st.session_state.user:
         st.warning("🔒 Please log in first.")
@@ -136,7 +149,7 @@ elif choice == "Store Data":
             else:
                 st.error("⚠️ Both fields are required.")
 
-# --- Retrieve Data (only if logged in) ---
+# --- Retrieve Data ---
 elif choice == "Retrieve Data":
     if not st.session_state.user:
         st.warning("🔒 Please log in first.")
@@ -158,3 +171,16 @@ elif choice == "Retrieve Data":
                     st.error(f"❌ Incorrect passkey. Attempts remaining: {remaining}")
             else:
                 st.error("⚠️ Both fields are required.")
+
+# ---- Footer ----
+st.markdown("-------")
+st.markdown(
+        """
+        <div style="text-align: center;">
+        <p>Secure Data Encryption</p>
+        <p>Build with ❤️ by <a href="https://github.com/rabia758">Rabia Rizwan</a> with streamlit</p>
+        <p>Happy Codding 💦 </p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )    
